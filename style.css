@@ -454,8 +454,13 @@ section .title::after{
 }
 
 /* contact section styling */
+.contact{
+    background-color: #333;
+}
+
 .contact .title::after{
     content: "get in touch";
+    background-color: #333;
 }
 .contact .contact-content .column{
     width: calc(50% - 30px);
@@ -487,7 +492,7 @@ section .title::after{
     font-weight: 500;
 }
 .contact .contact-content .info .sub-title{
-    color: #333;
+    color: white;
 }
 .contact .right form .fields{
     display: flex;
@@ -563,6 +568,9 @@ footer span a:hover{
     text-decoration: underline;
 }
 
+.contact-text{
+    color: white;
+}
 
 /* responsive media query start */
 @media (max-width: 1104px) {
