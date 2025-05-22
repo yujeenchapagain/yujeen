@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Line Cleaner</title>
+</head>
+<body>
+  <h2>Select a .txt or .docx file</h2>
+  <input type="file" id="fileInput" accept=".txt,.docx" />
+  <button id="downloadBtn" onclick="downloadCleaned()" disabled>Download Cleaned DOCX</button>
+
+  <!-- Mammoth.js for reading DOCX -->
+  <script src="mammoth.browser.min.js"></script>
+  <!-- docx.js UMD version that works in browser -->
+  <script src="docx.js"></script>
+
+  <script>
+    let cleanedText = '';
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    document.getElementById('fileInput').addEventListener('change', function (event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      downloadBtn.disabled = true;
+
+      if (file.name.endsWith('.txt')) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const text = e.target.result;
+          cleanedText = text
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .join(' ');
+          alert('TXT file processed!');
+          downloadBtn.disabled = false;
+        };
+        reader.readAsText(file, 'UTF-8');
+      } else if (file.name.endsWith('.docx')) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          mammoth.extractRawText({ arrayBuffer: e.target.result })
+            .then(result => {
+              cleanedText = result.value
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0)
+                .join(' ');
+              alert('DOCX file processed!');
+              downloadBtn.disabled = false;
+            })
+            .catch(err => {
+              alert('Error reading DOCX file.');
+              console.error(err);
+              downloadBtn.disabled = true;
+            });
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        alert('Unsupported file type. Please upload .txt or .docx only.');
+        downloadBtn.disabled = true;
+      }
+    });
+
+    function downloadCleaned() {
+      if (!cleanedText) {
+        alert('No text to download. Please upload a file first.');
+        return;
+      }
+
+      const { Document, Packer, Paragraph, TextRun, AlignmentType } = window.docx;
+
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.JUSTIFIED,
+                spacing: {
+                  line: 360, // Approx 1.5 line spacing (240 is single)
+                },
+                children: [
+                  new TextRun({
+                    text: cleanedText,
+                    size: 32, // 16pt font size (half-points)
+                  }),
+                ],
+              }),
+            ],
+          },
+        ],
+      });
+
+      Packer.toBlob(doc).then((blob) => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'cleaned_output.docx';
+        link.click();
+      });
+    }
+  </script>
+</body>
+</html>
